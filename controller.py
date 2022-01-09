@@ -69,10 +69,12 @@ class RepoInfo(Resource):
         user.add_repo(repo)
 
         dev = data["dev"]
-        devdep = dev
-  
-        output = checker.ILC(data["url"], False)
-        # output = {'name': 'aws-sdk-js', 'attributes': {'license': 'apache-2.0', 'color': 'y'}, 'children': [{'name': 'buffer', 'attributes': {'license': 'mit', 'color': 'y'}, 'children': [{'name': 'base64-js', 'attributes': {'license': 'mit', 'color': 'y'}}, {'name': 'ieee754', 'attributes': {'license': 'bsd-3-clause', 'color': 'n'}}]}, {'name': 'events', 'attributes': {'license': 'mit', 'color': 'y'}}, {'name': 'ieee754', 'attributes': {'license': 'bsd-3-clause', 'color': 'y'}}, {'name': 'jmespath', 'attributes': {'license': 'other', 'color': '?'}}, {'name': 'querystring', 'attributes': {'license': 'mit', 'color': 'y'}}, {'name': 'sax', 'attributes': {'license': 'other', 'color': '?'}}, {'name': 'url', 'attributes': {'license': 'mit', 'color': 'y'}, 'children': [{'name': 'punycode', 'attributes': {'license': 'mit', 'color': 'y'}}, {'name': 'querystring', 'attributes': {'license': 'mit', 'color': 'y'}}]}, {'name': 'uuid', 'attributes': {'license': 'mit', 'color': 'y'}}, {'name': 'xml2js', 'attributes': {'license': 'mit', 'color': 'y'}}]}
+        if dev == "true" or dev == "True":
+            devdep = True
+        else:
+            devdep = False
+
+        output = checker.ILC(data["url"], devdep)
 
         json_string = json.dumps(output,skipkeys = True,allow_nan = True) #json to string
 
@@ -87,7 +89,6 @@ class RepoInfo(Resource):
 #old repo, get old repos check and update repo's check
 class OldRepo(Resource):
     parser = reqparse.RequestParser()
-    # parser.add_argument('url', type=str, help="URL is required", required=True)
     parser.add_argument('dev', type=str, help="Dev is required", required=True)
 
     @jwt_required()
@@ -105,7 +106,10 @@ class OldRepo(Resource):
             return {"message": "Repo Not Found"}, 404
         
         dev = data["dev"]
-        devdep = dev
+        if dev == "true" or dev == "True":
+            devdep = True
+        else:
+            devdep = False
 
         output = checker.ILC(repo.url, devdep)
 

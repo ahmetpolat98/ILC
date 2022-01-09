@@ -125,8 +125,6 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 
 if __name__ == "__main__":
     print("Creating database tables...")
-    # Check.__table__.drop(db.engine)
-    # Repo.__table__.drop(db.engine)
     # db.drop_all()
     db.create_all()
     print("Done!")
