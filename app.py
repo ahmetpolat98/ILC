@@ -16,7 +16,7 @@ ma = Marshmallow()
 app = Flask(__name__)
     
     #this url must be change / local path where the sqlite database is located must be made.
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://ovhhdkypfqxegd:ae2e076df48b2fbf61d26789cda9e6b505a67b56dd194cefa14687421a469c75@ec2-52-211-158-144.eu-west-1.compute.amazonaws.com:5432/deaavsgegkf9a6"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://hpneeioeahkezp:8b8839bbf70c7d46b0a0d4d975beff5c0cd56620e31e68977194faf1538bf536@ec2-52-49-68-244.eu-west-1.compute.amazonaws.com:5432/d637g17ceu02ra"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'ILC secret key' 
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
