@@ -20,16 +20,7 @@ class Parser:
         owner = self.URL.split("/")[3]
         repo = self.URL.split("/")[4]
         return "https://api.github.com/repos/"+owner+"/"+repo
-    
-    def __get_license(self):
-        global username, token
-        response = requests.get(self.api_url+"/license",auth=(username,token))
-        if response.status_code == 200:
-            return str(response.json()["license"]["key"])
-        else:
-            #print("License information cannot found.")
-            return "ERROR"
-    
+        
     def parse(self):
         json = {}
         dict_ = get_dependencies(self.api_url,self.dev_dep)
@@ -92,6 +83,7 @@ def get_repo_from_pip(URL):
 
 def get_dependencies(api_url,dev_dep=False):
     global username, token
+    stored_dep = {}
     languages = get_languages(api_url)
     for language in languages:
         if language == "JavaScript": 
@@ -101,19 +93,20 @@ def get_dependencies(api_url,dev_dep=False):
             pip_url = "https://pypi.org/pypi/" # PYTHON only
             response = requests.get(api_url + "/contents/requirements.txt",auth=(username,token)) # for PYTHON projects only
         else:
-            print("WARNING: UNSUPPORTED LANGUAGE: " + language)
+            #print("WARNING: UNSUPPORTED LANGUAGE: " + language)
             continue
-        
-        #print(response.status_code)
         if response.status_code == 200:
             dependency_dict = (base64.decodebytes(bytearray(response.json()["content"], 'utf-8')).decode('utf-8'))
-            try:
-                if language == "JavaScript":
-                    temp_dict = json.loads(dependency_dict)["dependencies"]
+           # try:
+            if language == "JavaScript":
+                    try:
+                        temp_dict = json.loads(dependency_dict)["dependencies"]
+                    except:
+                        temp_dict = {}
                     if dev_dep:
                         temp_dict.update(json.loads(dependency_dict)["devDependencies"])
                     dependency_dict = temp_dict
-                elif language == "Python":
+            elif language == "Python":
                     temp = dependency_dict
                     dependency_dict = {}
                     for line in temp.splitlines():
@@ -122,44 +115,46 @@ def get_dependencies(api_url,dev_dep=False):
                             dependency_dict[line[0][:-1]] = line[-1]
                         else:
                             dependency_dict[line[0]] = line[-1]
-            except:
-                dependency_dict = {}
+            #except Exception as E:
+            #    dependency_dict = {}
             for package in dependency_dict.keys():
                     try:
-                        print("Package : " + package)
+                        #print("Package : " + package)
                         if language == "JavaScript":
                             URL = npm_url + package
                             repo_url = get_repo_from_npm(URL)
                         elif language == "Python": #Actually only option is Python
                             URL = pip_url + package + "/json"
                             repo_url = get_repo_from_pip(URL)
-                        api_url = get_api_url(repo_url)
+                        api_url_ = get_api_url(repo_url)
                         dict_ = {}
-                        dict_["license"] = get_license(api_url) # Can be 'other'
-                        dict_["dependencies"] = get_dependencies(api_url,False) # dev_dep of dev_dep is not checked
+                        dict_["license"] = get_license(api_url_) # Can be 'other'
+                        dict_["dependencies"] = get_dependencies(api_url_,False) # dev_dep of dev_dep is not checked
                         dependency_dict[package] = dict_
                     except Exception as E:
-                        print("Exception: ")
-                        print(E)
+                        #print(E)
                         dict_ = {"license": "ERROR", "dependencies" : "ERROR"}
                         dependency_dict[package] = dict_
                         continue
+            if language != languages[-1]:       
+                stored_dep.update(dependency_dict)
         else:
             dependency_dict = {"ERROR": "ERROR"}
             #print("Dependencies cannot found.")
             
     try:
-        #print(dependency_dict)
+        dependency_dict.update(stored_dep)
         return dependency_dict
     except:
         return {}
 
-# URL = "https://github.com/aws/aws-sdk-js" # example, normally it is given from web-app
+#URL = "https://github.com/aws/aws-sdk-js" # example, normally it is given from web-app
 #URL = "https://github.com/Haytaf17/haytaf17database"
 #URL = "https://github.com/aydinbugra/Nutbarn"
 #URL = "https://github.com/aydinbugra/test"
-# parser = Parser(URL,False)
-# print(parser.parse()) # License Checker can use this function to get all dependincies and their license info
+#URL = "https://github.com/marnusw/cloudinary-tiny-js"
+#parser = Parser(URL,False)
+#print(parser.parse()) # License Checker can use this function to get all dependincies and their license info
 
 
 # For not found case
