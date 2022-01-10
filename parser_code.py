@@ -133,7 +133,7 @@ def get_dependencies(api_url,dev_dep=False):
                         dependency_dict[package] = dict_
                     except Exception as E:
                         #print(E)
-                        dict_ = {"license": "ERROR", "dependencies" : "ERROR"}
+                        dict_ = {"license": "ERROR", "dependencies" : {"ERROR": "ERROR"}}
                         dependency_dict[package] = dict_
                         continue
             if language != languages[-1]:       

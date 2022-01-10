@@ -2,16 +2,13 @@ import json
 import pandas as pd
 import parser_code
 
-licenseMatrix = ""
-
+global licenseMatrix
 class Node:
     def __init__(self, package,license,uyum):
         self.children = []
         self.package = package
         self.license = license
         self.uyumlu = uyum
-    def __print__(self):
-        print(self.package,":",self.license)
 
 def RecursiveChecker(dependencies,node,parentlicense):
     lenDependencies = len(list(dependencies.keys()))
@@ -19,9 +16,12 @@ def RecursiveChecker(dependencies,node,parentlicense):
         package = list(dependencies.keys())[i]
         restDependencies = dependencies[package]
         license = restDependencies["license"]
-        uyumlu = IsLicenseConsistent(parentlicense,license) 
+        uyumlu = IsLicenseConsistent(parentlicense,license)
         node.children.insert(i,Node(package,license,uyumlu))
-        RecursiveChecker( restDependencies["dependencies"],node.children[i],license)
+        try :
+            RecursiveChecker( restDependencies["dependencies"],node.children[i],license)
+        except:
+            continue
     return
        
     
@@ -33,43 +33,62 @@ def IsLicenseConsistent(parent,child):
         if(licenseMatrix.columns[i].lower() == child.lower()):
             row = i
     if row == -1 :
-        return '?'
+        return "?"
     for i in range(len(licenseMatrix.columns)):
         if(licenseMatrix.columns[i].lower() == parent.lower()):
             column = i
     if column == -1 :
-        return '?'
+        return "?"
     return licenseMatrix[licenseMatrix.columns[column]][row]
 
 
 
-def RecursiveJson(a):
-    x ={}
-    x = {
-        "name":a.package,
+def RecursiveJson(nodeTree):
+    JsonPackage ={}
+    JsonPackage = {
+        "name":nodeTree.package,
         "attributes":{
-            "license": a.license,
-            "color" : a.uyumlu
+            "license": nodeTree.license,
+            "color" : nodeTree.uyumlu
         }
     }
-    y =[]
-    for i in range(len(a.children)): 
-        y.append(RecursiveJson(a.children[i]))
-    if 0 != len(y):
-        x['children'] = y
-    return x
+    children =[]
+    for i in range(len(nodeTree.children)): 
+        children.append(RecursiveJson(nodeTree.children[i]))
+    if 0 != len(children):
+        JsonPackage["children"] = children
+    return JsonPackage
 
-def ILC( url,devDependency=False):
+def stringInconsistencies(jsonOutput):
+    inconsistencies =[]
+    RecursiveVersion(jsonOutput,jsonOutput["name"],inconsistencies)
+    return inconsistencies
+    
+    
+def RecursiveVersion(jsonOutput,parentPackage,inconsistencies): 
+    if "children" in jsonOutput:
+        rest = jsonOutput["children"]
+    else :
+        return
+    for i in range(len(rest)):
+        if( (rest[i]["attributes"]["color"]) == "n" ):
+            str = rest[i]["name"] + " is inconsistent with " + parentPackage + "!"
+            inconsistencies.append(str)
+        
+        if "children" in rest[i]:
+            RecursiveVersion(rest[i],rest[i]["name"],inconsistencies)
+    return
+
+      
+
+def ILC( url,devDependency):
     global licenseMatrix
-    licenseMatrix = pd.read_csv('licenseInconsistency.csv')
+    licenseMatrix = pd.read_csv("licenseInconsistency.csv")
     parser = parser_code.Parser(url,devDependency)
     parserResult = parser.parse()
     root = Node("base","base","base")
-    print( parserResult[list(parserResult.keys())[0]]['license'] )
-    RecursiveChecker(parserResult,root,parserResult[list(parserResult.keys())[0]]['license'])
+    RecursiveChecker(parserResult,root,parserResult[list(parserResult.keys())[0]]["license"])
     jsonOutput = RecursiveJson(root.children[0])
     return jsonOutput
-    
-# ILC("https://github.com/aws/aws-sdk-js",False)
-    
+
     

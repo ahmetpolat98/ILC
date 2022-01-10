@@ -83,7 +83,10 @@ class RepoInfo(Resource):
         repo.add_check(check)
 
         out_json = json.loads(json_string) #string to json
-        return jsonify(out_json)
+
+        string_license = checker.stringInconsistencies(out_json)
+
+        return jsonify({"tree": out_json, "str":string_license})
 
 
 #old repo, get old repos check and update repo's check
@@ -97,7 +100,10 @@ class OldRepo(Resource):
         if not repo:
             return {"message": "Repo Not Found"}, 404
         out_json = json.loads(repo.checks[0].inconsistency) #string to json
-        return jsonify(out_json)
+
+        string_license = checker.stringInconsistencies(out_json)
+        
+        return jsonify({"tree": out_json, "str":string_license})
 
     def post(self, id):
         data = OldRepo.parser.parse_args()
@@ -118,7 +124,9 @@ class OldRepo(Resource):
         repo.checks[0].inconsistency = json_string
         repo.commit()
 
-        return jsonify(output)
+        string_license = checker.stringInconsistencies(output)
+
+        return jsonify({"tree": output, "str":string_license})
 
 #change password
 class PasswordChange(Resource):
