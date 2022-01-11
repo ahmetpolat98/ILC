@@ -1,2 +1,2 @@
-username=ahmetpolat98
-token=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
+username=aydinbugra
+token=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
